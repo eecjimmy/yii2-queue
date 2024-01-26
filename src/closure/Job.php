@@ -22,6 +22,11 @@ class Job implements JobInterface
      */
     public $serialized;
 
+    /**
+     * @var mixed unserialized closure
+     */
+    private $unserialized;
+
 
     /**
      * Unserializes and executes a closure.
@@ -29,10 +34,22 @@ class Job implements JobInterface
      */
     public function execute($queue)
     {
-        $unserialized = opis_unserialize($this->serialized);
+        $unserialized = $this->unserialize();
         if ($unserialized instanceof \Closure) {
             return $unserialized();
         }
         return $unserialized->execute($queue);
+    }
+
+    /**
+     * Unserializes serialized job and caches it.
+     * @return mixed
+     */
+    private function unserialize()
+    {
+        if ($this->unserialized === null) {
+            $this->unserialized = opis_unserialize($this->serialized);
+        }
+        return $this->unserialized;
     }
 }
